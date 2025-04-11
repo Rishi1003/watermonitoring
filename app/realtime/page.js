@@ -34,43 +34,92 @@ function App() {
     const [chartData, setChartData] = useState([]);
     const [dataHistory, setDataHistory] = useState([]);
 
+    const [ipAddress, setIpAddress] = useState('');
+    const [ipConfirmed, setIpConfirmed] = useState(false);
+
+
+    // useEffect(() => {
+    //     const fetchData = async () => {
+    //         try {
+    //             const response = await fetch('http://${ipAddress}');
+    //             const data = await response.json();
+    //             setSensorData(data);
+
+    //             if (data.temperature) {
+    //                 setChartData(prevData => {
+    //                     const timestamp = data.timestamp || new Date().toISOString();
+
+    //                     // Parse the timestamp using regex to handle single-digit month/day/hours/minutes/seconds
+    //                     const parts = timestamp.match(/^(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{1,2}):(\d{1,2})Z$/);
+
+    //                     // Create a properly formatted timestamp with padded values
+    //                     const fixedTimestamp = parts ?
+    //                         `${parts[1]}-${parts[2].padStart(2, '0')}-${parts[3].padStart(2, '0')}T${parts[4].padStart(2, '0')}:${parts[5].padStart(2, '0')}:${parts[6].padStart(2, '0')}Z` :
+    //                         timestamp;
+
+    //                     // Parse the fixed timestamp into a Date object
+    //                     const dateObj = new Date(fixedTimestamp);
+
+    //                     // Format time for display
+    //                     const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+
+    //                     const newData = [...prevData, {
+    //                         name: time,
+    //                         value: data.temperature
+    //                     }];
+    //                     return newData.length > 6 ? newData.slice(-6) : newData;
+    //                 });
+    //             }
+
+    //             setDataHistory(prev => {
+    //                 const newHistory = [...prev, data];
+    //                 return newHistory.slice(-5);
+    //             });
+    //         } catch (error) {
+    //             console.error('Error fetching sensor data:', error);
+    //         }
+    //     };
+
+    //     fetchData();
+    //     const interval = setInterval(fetchData, 4000);
+    //     return () => clearInterval(interval);
+    // }, []);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await fetch('http://192.168.31.132');
+                const response = await fetch(`http://${ipAddress}`);
                 const data = await response.json();
                 setSensorData(data);
 
+                const timestamp = data.timestamp || new Date().toISOString();
+
+                // Use regex fix only if GPS timestamp exists
+                const parts = data.timestamp?.match(/^(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{1,2}):(\d{1,2})Z$/);
+                const fixedTimestamp = parts
+                    ? `${parts[1]}-${parts[2].padStart(2, '0')}-${parts[3].padStart(2, '0')}T${parts[4].padStart(2, '0')}:${parts[5].padStart(2, '0')}:${parts[6].padStart(2, '0')}Z`
+                    : timestamp;
+
+                const dateObj = new Date(fixedTimestamp);
+                const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
                 if (data.temperature) {
                     setChartData(prevData => {
-                        const timestamp = data.timestamp || new Date().toISOString();
-
-                        // Parse the timestamp using regex to handle single-digit month/day/hours/minutes/seconds
-                        const parts = timestamp.match(/^(\d{4})-(\d{1,2})-(\d{1,2})T(\d{1,2}):(\d{1,2}):(\d{1,2})Z$/);
-
-                        // Create a properly formatted timestamp with padded values
-                        const fixedTimestamp = parts ?
-                            `${parts[1]}-${parts[2].padStart(2, '0')}-${parts[3].padStart(2, '0')}T${parts[4].padStart(2, '0')}:${parts[5].padStart(2, '0')}:${parts[6].padStart(2, '0')}Z` :
-                            timestamp;
-
-                        // Parse the fixed timestamp into a Date object
-                        const dateObj = new Date(fixedTimestamp);
-
-                        // Format time for display
-                        const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-
                         const newData = [...prevData, {
                             name: time,
-                            value: data.temperature
+                            value: data.temperature,
                         }];
                         return newData.length > 6 ? newData.slice(-6) : newData;
                     });
                 }
 
                 setDataHistory(prev => {
-                    const newHistory = [...prev, data];
-                    return newHistory.slice(-5);
+                    const newHistory = [...prev, {
+                        ...data,
+                        timestamp: fixedTimestamp // <-- ensure consistent timestamp
+                    }];
+                    return newHistory;
                 });
             } catch (error) {
                 console.error('Error fetching sensor data:', error);
@@ -80,7 +129,8 @@ function App() {
         fetchData();
         const interval = setInterval(fetchData, 4000);
         return () => clearInterval(interval);
-    }, []);
+    }, [ipAddress]);
+
 
     const position = [
         sensorData.latitude || 1.3521,
@@ -109,6 +159,35 @@ function App() {
             turbidityColor = 'text-gray-500';
             turbidityBgColor = 'bg-gray-500';
     }
+
+
+    if (!ipConfirmed) {
+        return (
+            <div className="min-h-screen flex items-start pt-24 justify-center bg-blue-50">
+                <div className="bg-white p-8 rounded-xl shadow-md max-w-md text-center">
+                    <h2 className="text-xl font-bold text-gray-700 mb-4">Enter Buoy IP Address</h2>
+                    <p className="text-sm text-gray-500 mb-6">
+                        Press the <span className="font-semibold">boot button</span> on the buoy to display its IP address, then enter it below.
+                    </p>
+                    <input
+                        type="text"
+                        placeholder="e.g., 192.168.31.132"
+                        value={ipAddress}
+                        onChange={(e) => setIpAddress(e.target.value)}
+                        className="w-full px-4 py-2 border rounded-md mb-4 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400"
+                    />
+                    <button
+                        onClick={() => setIpConfirmed(true)}
+                        disabled={!ipAddress}
+                        className="bg-blue-500 text-white px-4 py-2 rounded-md w-full hover:bg-blue-600 transition"
+                    >
+                        Confirm IP
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">

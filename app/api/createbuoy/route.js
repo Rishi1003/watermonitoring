@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import buoy from '@/models/buoy';
 
+export async function GET(request) {
+    try {
+
+        await connectToDatabase();
+        const buoys = await buoy.find()
+        return NextResponse.json({ data: buoys })
+
+    } catch (error) {
+        console.log(error);
+        return NextResponse.json({ message: "Server error", error }, { status: 500 });
+    }
+}
+
 export async function POST(request) {
     try {
         const body = await request.json();

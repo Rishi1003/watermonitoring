@@ -18,16 +18,16 @@ export function NavigationBar() {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
+            <Link href="/">
+              <Button variant="ghost" className="flex items-center space-x-2 text-sky-700 hover:text-sky-800 hover:bg-sky-50">
+                <Waves className="h-4 w-4" />
+                <span>Lakes</span>
+              </Button>
+            </Link>
             <Link href="/realtime">
               <Button variant="ghost" className="flex items-center space-x-2 text-sky-700 hover:text-sky-800 hover:bg-sky-50">
                 <Clock className="h-4 w-4" />
                 <span>Realtime View</span>
-              </Button>
-            </Link>
-            <Link href="/lakes">
-              <Button variant="ghost" className="flex items-center space-x-2 text-sky-700 hover:text-sky-800 hover:bg-sky-50">
-                <Waves className="h-4 w-4" />
-                <span>Lakes</span>
               </Button>
             </Link>
             <Link href="/register">
