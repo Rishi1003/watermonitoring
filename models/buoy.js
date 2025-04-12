@@ -13,6 +13,14 @@ const buoySchema = new Schema({
         required: true,
         trim: true
     },
+    email: {
+        type: String,
+        required: true
+    },
+    boardAddress: {
+        type: String,
+        required: true
+    },
     latitude: {
         type: Number,
         required: true,

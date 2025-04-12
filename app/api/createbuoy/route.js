@@ -18,7 +18,7 @@ export async function GET(request) {
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { departmentName, lakes } = body;
+        const { departmentName, email, boardAddress, lakes } = body;
 
         if (!departmentName || !Array.isArray(lakes)) {
             return NextResponse.json({ message: "Invalid data format" }, { status: 400 });
@@ -28,6 +28,8 @@ export async function POST(request) {
 
         const buoyData = lakes.map(lake => ({
             departmentName,
+            email,
+            boardAddress,
             lakeName: lake.name,
             latitude: lake.latitude,
             longitude: lake.longitude,
